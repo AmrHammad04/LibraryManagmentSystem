@@ -15,6 +15,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.library.demo.entity.Magazine;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+import com.library.demo.entity.Newspaper;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
 
 @Controller
 public class ItemPageController {
@@ -25,27 +32,94 @@ public class ItemPageController {
         this.libraryItemService = libraryItemService;
     }
 
+    @GetMapping("/")
+    public String home() {
+        return "redirect:/items";
+    }
+
     @GetMapping("/items")
     public String listItems(
         Authentication authentication,
+        @RequestParam(defaultValue = "false") boolean availableOnly,
         @RequestParam(required = false) String title,
         @RequestParam(required = false) String author,
         @RequestParam(required = false) Integer year,
+        @RequestParam(required = false) String type,
         Model model) {
 
-        model.addAttribute("items", libraryItemService.search(title, author, year));
-        model.addAttribute("title", title);
+        List<LibraryItem> items = libraryItemService.search(title, author, year);
+        model.addAttribute("items", items);        model.addAttribute("title", title);
         model.addAttribute("author", author);
         model.addAttribute("year", year);
         boolean admin = false;
-        for (GrantedAuthority authority : authentication.getAuthorities()) {
-            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
-                admin = true;
-                break;
+        boolean librarian = false;
+        List<Integer> bookIds = new ArrayList<>();
+        List<Integer> magazineIds = new ArrayList<>();
+        List<Integer> newspaperIds = new ArrayList<>();
+        for (LibraryItem item : items) {
+            if (item instanceof Book) {
+                bookIds.add(item.getId());
             }
         }
 
+        model.addAttribute("bookIds", bookIds);
+
+        for (LibraryItem item : items) {
+            if (item instanceof Magazine) {
+                magazineIds.add(item.getId());
+            }
+        }
+
+        model.addAttribute("magazineIds", magazineIds);
+
+        for (LibraryItem item : items) {
+            if (item instanceof Newspaper) {
+                newspaperIds.add(item.getId());
+            }
+        }
+
+        model.addAttribute("newspaperIds", newspaperIds);
+
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
+                admin = true;
+            }
+
+            if ("ROLE_LIBRARIAN".equals(authority.getAuthority())) {
+                librarian = true;
+            }
+        }
+        if (availableOnly) {
+            List<LibraryItem> availableItems = new ArrayList<>();
+
+            for (LibraryItem item : items) {
+                if (Boolean.TRUE.equals(item.getAvailability())) {
+                    availableItems.add(item);
+                }
+            }
+
+            items = availableItems;
+        }
+       
+        model.addAttribute("availableOnly", availableOnly);
+
+        if (type != null && !type.isBlank()) {
+            List<LibraryItem> matchingItems = new ArrayList<>();
+
+            for (LibraryItem item : items) {
+                if ((type.equals("BOOK") && item instanceof Book)
+                        || (type.equals("MAGAZINE") && item instanceof Magazine)
+                        || (type.equals("NEWSPAPER") && item instanceof Newspaper)) {
+                    matchingItems.add(item);
+                }
+            }
+
+            items = matchingItems;
+        }
+        model.addAttribute("type", type);
+        model.addAttribute("items", items);
         model.addAttribute("admin", admin);
+        model.addAttribute("librarian", librarian);
         return "items/list";
     }
 
@@ -56,11 +130,17 @@ public class ItemPageController {
     }
 
     @PostMapping("/items/books")
-    public String saveBook(@ModelAttribute("book") Book book) {
+    public String saveBook(
+            @Valid @ModelAttribute("book") Book book,
+            BindingResult result) {
+
+        if (result.hasErrors()) {
+            return "items/book-form";
+        }
+
         book.setId(0);
         book.setAvailability(true);
         libraryItemService.save(book);
-
         return "redirect:/items";
     }
 
@@ -77,11 +157,21 @@ public class ItemPageController {
     }
 
     @PostMapping("/items/books/{id}")
-    public String updateBook(@PathVariable int id, @ModelAttribute Book formBook) {
+    public String updateBook(
+            @PathVariable int id,
+            @Valid @ModelAttribute("book") Book formBook,
+            BindingResult result) {
+
         LibraryItem item = libraryItemService.findById(id);
 
         if (!(item instanceof Book)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a book");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Item is not a book");
+        }
+
+        if (result.hasErrors()) {
+            formBook.setId(id);
+            return "items/edit-book";
         }
 
         Book book = (Book) item;
@@ -110,5 +200,120 @@ public class ItemPageController {
         return "redirect:/items";
     }
 
+    @GetMapping("/items/magazines/new")
+    public String showMagazineForm(Model model) {
+        model.addAttribute("magazine", new Magazine());
+        return "items/magazine-form";
+    }
 
+    @PostMapping("/items/magazines")
+    public String saveMagazine(
+            @Valid @ModelAttribute("magazine") Magazine magazine,
+            BindingResult result) {
+
+        if (result.hasErrors()) {
+            return "items/magazine-form";
+        }
+
+        magazine.setId(0);
+        magazine.setAvailability(true);
+        libraryItemService.save(magazine);
+        return "redirect:/items";
+    }
+
+    @GetMapping("/items/newspapers/new")
+    public String showNewspaperForm() {
+        return "items/newspaper-form";
+    }
+
+    @PostMapping("/items/newspapers")
+    public String saveNewspaper(
+            @RequestParam String title,
+            @RequestParam String author,
+            @RequestParam Integer yearOfPublication,
+            @RequestParam String publicationDate,
+            @RequestParam String region) {
+
+        Newspaper newspaper = new Newspaper(
+                title,
+                author,
+                yearOfPublication,
+                true,
+                Date.valueOf(publicationDate),
+                region
+        );
+
+        libraryItemService.save(newspaper);
+        return "redirect:/items";
+    }
+
+    @GetMapping("/items/magazines/{id}/edit")
+    public String showEditMagazineForm(@PathVariable int id, Model model) {
+        LibraryItem item = libraryItemService.findById(id);
+
+        if (!(item instanceof Magazine)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a magazine");
+        }
+
+        model.addAttribute("magazine", item);
+        return "items/edit-magazine";
+    }
+
+    @PostMapping("/items/magazines/{id}")
+    public String updateMagazine(@PathVariable int id,
+                                @ModelAttribute Magazine formMagazine) {
+        LibraryItem item = libraryItemService.findById(id);
+
+        if (!(item instanceof Magazine)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a magazine");
+        }
+
+        Magazine magazine = (Magazine) item;
+        magazine.setTitle(formMagazine.getTitle());
+        magazine.setAuthor(formMagazine.getAuthor());
+        magazine.setYearOfPublication(formMagazine.getYearOfPublication());
+        magazine.setIssueNumber(formMagazine.getIssueNumber());
+        magazine.setCategory(formMagazine.getCategory());
+
+        libraryItemService.save(magazine);
+        return "redirect:/items";
+    }
+
+    @GetMapping("/items/newspapers/{id}/edit")
+    public String showEditNewspaperForm(@PathVariable int id, Model model) {
+        LibraryItem item = libraryItemService.findById(id);
+
+        if (!(item instanceof Newspaper)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a newspaper");
+        }
+
+        model.addAttribute("newspaper", item);
+        return "items/edit-newspaper";
+    }
+
+    @PostMapping("/items/newspapers/{id}")
+    public String updateNewspaper(
+            @PathVariable int id,
+            @RequestParam String title,
+            @RequestParam String author,
+            @RequestParam Integer yearOfPublication,
+            @RequestParam String publicationDate,
+            @RequestParam String region) {
+
+        LibraryItem item = libraryItemService.findById(id);
+
+        if (!(item instanceof Newspaper)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a newspaper");
+        }
+
+        Newspaper newspaper = (Newspaper) item;
+        newspaper.setTitle(title);
+        newspaper.setAuthor(author);
+        newspaper.setYearOfPublication(yearOfPublication);
+        newspaper.setPublicationDate(Date.valueOf(publicationDate));
+        newspaper.setRegion(region);
+
+        libraryItemService.save(newspaper);
+        return "redirect:/items";
+    }
 }

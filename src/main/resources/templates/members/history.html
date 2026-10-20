@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Borrowing History</title>
+</head>
+<body>
+    <h1>Borrowing History for Member <span th:text="${memberId}"></span></h1>
+    <form th:action="@{/members/{id}/borrowings(id=${memberId})}" method="get">
+        <label>
+            <input type="checkbox" name="activeOnly" value="true"
+                th:checked="${activeOnly}">
+            Active borrowings only
+        </label>
+        <button type="submit">Apply</button>
+    </form>
+    <p><a th:href="@{/members}">Back to Members</a></p>
+
+    <p th:if="${#lists.isEmpty(borrowings)}">This member has no borrowing history.</p>
+
+    <table border="1" th:unless="${#lists.isEmpty(borrowings)}">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Borrowed</th>
+                <th>Due</th>
+                <th>Returned</th>
+                <th>Fine</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="borrowing : ${borrowings}">
+                <td th:text="${borrowing.item.title}"></td>
+                <td th:text="${borrowing.borrowingDate}"></td>
+                <td th:text="${borrowing.dueDate}"></td>
+                <td th:text="${borrowing.returnDate != null ? borrowing.returnDate : 'Not returned'}"></td>
+                <td th:text="${borrowing.fineAmount}"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

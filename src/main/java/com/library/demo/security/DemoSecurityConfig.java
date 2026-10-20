@@ -31,13 +31,23 @@ public class DemoSecurityConfig {
                         .requestMatchers("/api/borrowings/**").hasRole("LIBRARIAN")
                         .requestMatchers(HttpMethod.POST, "/api/items/**").hasRole("LIBRARIAN")
                         .requestMatchers(HttpMethod.PUT, "/api/items/**").hasRole("LIBRARIAN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
+
+
                         .requestMatchers(HttpMethod.GET, "/items/books/new").hasRole("LIBRARIAN")
                         .requestMatchers(HttpMethod.POST, "/items/books").hasRole("LIBRARIAN")
                         .requestMatchers(HttpMethod.GET, "/items/books/*/edit").hasRole("LIBRARIAN")
                         .requestMatchers(HttpMethod.POST, "/items/books/*").hasRole("LIBRARIAN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/items/*/delete").hasRole("ADMIN")
-                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/items/magazines/new").hasRole("LIBRARIAN")
+                        .requestMatchers(HttpMethod.POST, "/items/magazines").hasRole("LIBRARIAN")
+                        .requestMatchers(HttpMethod.GET, "/items/newspapers/new").hasRole("LIBRARIAN")
+                        .requestMatchers(HttpMethod.POST, "/items/newspapers").hasRole("LIBRARIAN")
+                        .requestMatchers(HttpMethod.POST, "/members/*/delete").hasRole("ADMIN")
+                        .requestMatchers("/members", "/members/**").hasAnyRole("ADMIN", "LIBRARIAN")
+                        .requestMatchers("/borrowings/**").hasRole("LIBRARIAN")
+                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
         );

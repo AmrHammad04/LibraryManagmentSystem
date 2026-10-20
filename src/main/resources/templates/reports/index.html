@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Library Reports</title>
+</head>
+<body>
+    <h1>Library Reports</h1>
+    <a th:href="@{/items}">Library Items</a>
+
+    <h2>Most Borrowed Item</h2>
+    <p th:text="${mostBorrowedTitle}"></p>
+
+    <h2>Borrowings by Type</h2>
+    <p>Books: <span th:text="${bookCount}"></span></p>
+    <p>Magazines: <span th:text="${magazineCount}"></span></p>
+    <p>Newspapers: <span th:text="${newspaperCount}"></span></p>
+
+    <h2>Total Fines Collected</h2>
+    <p th:text="${totalFines}"></p>
+
+    <h2>Popular Items</h2>
+    <p th:if="${#lists.isEmpty(popularItems)}">No borrowings yet.</p>
+    <ol>
+        <li th:each="item : ${popularItems}" th:text="${item.title}"></li>
+    </ol>
+
+    <h2>Top Borrowers</h2>
+    <p th:if="${#lists.isEmpty(topBorrowers)}">No borrowers yet.</p>
+    <ol>
+        <li th:each="member : ${topBorrowers}" th:text="${member.name}"></li>
+    </ol>
+</body>
+</html>

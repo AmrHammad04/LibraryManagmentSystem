@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Newspaper</title>
+</head>
+<body>
+    <h1>Add Newspaper</h1>
+
+    <form th:action="@{/items/newspapers}" method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+
+        <p>Title: <input type="text" name="title" required></p>
+        <p>Publisher: <input type="text" name="author" required></p>
+        <p>Year: <input type="number" name="yearOfPublication" required></p>
+        <p>Publication date: <input type="date" name="publicationDate" required></p>
+        <p>Region: <input type="text" name="region" required></p>
+
+        <button type="submit">Save Newspaper</button>
+        <a th:href="@{/items}">Cancel</a>
+    </form>
+</body>
+</html>

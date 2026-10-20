@@ -2,12 +2,17 @@ package com.library.demo.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "magazine")
 public class Magazine extends LibraryItem {
 
+    @Min(value = 1, message = "Issue number must be at least 1")
     private int issueNumber;
+
+    @NotBlank(message = "Category is required")
     private String category;
     
 

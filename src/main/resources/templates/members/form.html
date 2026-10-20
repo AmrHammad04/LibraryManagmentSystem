@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Member Form</title>
+</head>
+<body>
+    <h1 th:text="${member.id == 0 ? 'Add Member' : 'Edit Member'}"></h1>
+
+    <form th:action="${member.id == 0}
+                    ? @{/members}
+                    : @{/members/{id}(id=${member.id})}"
+          th:object="${member}"
+          method="post"
+          novalidate>
+
+        <p>
+            Name:
+            <input type="text" th:field="*{name}">
+            <span th:if="${#fields.hasErrors('name')}"
+                  th:errors="*{name}"></span>
+        </p>
+
+        <p>
+            Phone:
+            <input type="tel" th:field="*{phone}">
+            <span th:if="${#fields.hasErrors('phone')}"
+                  th:errors="*{phone}"></span>
+        </p>
+
+        <p>
+            Email:
+            <input type="email" th:field="*{email}">
+            <span th:if="${#fields.hasErrors('email')}"
+                  th:errors="*{email}"></span>
+        </p>
+
+        <button type="submit">Save Member</button>
+        <a th:href="@{/members}">Cancel</a>
+    </form>
+</body>
+</html>

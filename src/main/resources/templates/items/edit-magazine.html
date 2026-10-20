@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Magazine</title>
+</head>
+<body>
+    <h1>Edit Magazine</h1>
+
+    <form th:action="@{/items/magazines/{id}(id=${magazine.id})}"
+          th:object="${magazine}"
+          method="post">
+
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+
+        <p>
+            <label>Title:
+                <input type="text" th:field="*{title}" required>
+            </label>
+        </p>
+
+        <p>
+            <label>Author / Publisher:
+                <input type="text" th:field="*{author}" required>
+            </label>
+        </p>
+
+        <p>
+            <label>Year:
+                <input type="number" th:field="*{yearOfPublication}" required>
+            </label>
+        </p>
+
+        <p>
+            <label>Issue Number:
+                <input type="number" th:field="*{issueNumber}" required>
+            </label>
+        </p>
+
+        <p>
+            <label>Category:
+                <input type="text" th:field="*{category}" required>
+            </label>
+        </p>
+
+        <button type="submit">Save Changes</button>
+        <a th:href="@{/items}">Cancel</a>
+    </form>
+</body>
+</html>

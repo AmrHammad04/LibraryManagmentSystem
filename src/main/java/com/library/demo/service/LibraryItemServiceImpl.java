@@ -77,23 +77,18 @@ public class LibraryItemServiceImpl implements LibraryItemService {
         List<LibraryItem> results = new ArrayList<>();
 
         for (LibraryItem item : findAll()) {
-
-            if (title != null && !title.isBlank()) {
-                if (!containsIgnoreCase(item.getTitle(), title)) {
-                    continue;
-                }
+            if (title != null && !title.isBlank()
+                    && !containsIgnoreCase(item.getTitle(), title)) {
+                continue;
             }
 
-            if (author != null && !author.isBlank()) {
-                if (!containsIgnoreCase(item.getAuthor(), author)) {
-                    continue;
-                }
+            if (author != null && !author.isBlank()
+                    && !containsIgnoreCase(item.getAuthor(), author)) {
+                continue;
             }
 
-            if (year != null) {
-                if (!year.equals(item.getYearOfPublication())) {
-                    continue;
-                }
+            if (year != null && !year.equals(item.getYearOfPublication())) {
+                continue;
             }
 
             results.add(item);

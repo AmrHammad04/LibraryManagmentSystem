@@ -1,7 +1,9 @@
 package com.library.demo.entity;
 
 import jakarta.persistence.*;
-
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 @Entity
 @Table(name = "library_item")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -12,13 +14,17 @@ public class LibraryItem {
     @Column(name = "id")
     private int id;
 
+    @NotBlank(message = "Title is required")
     @Column(name = "title")
     private String title;
 
+    @NotBlank(message = "Author or publisher is required")
     @Column(name = "author_publisher")
     private String author;
 
-    @Column(name = "year_of_publication")
+    @NotNull(message = "Publication year is required")
+    @Min(value = 1, message = "Publication year must be positive")
+    @Column(name = "Year_of_Publication")
     private Integer yearOfPublication;
 
     @Column(name = "availability")

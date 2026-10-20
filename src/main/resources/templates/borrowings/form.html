@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Borrow an Item</title>
+</head>
+<body>
+    <h1>Borrow an Item</h1>
+
+    <form th:action="@{/borrowings}" method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+
+        <p>
+            Member:
+            <select name="memberId" required>
+                <option value="">Choose a member</option>
+                <option th:each="member : ${members}"
+                        th:value="${member.id}"
+                        th:text="${member.name}"></option>
+            </select>
+        </p>
+
+        <p>
+            Available item:
+            <select name="itemId" required>
+                <option value="">Choose an item</option>
+                <option th:each="item : ${availableItems}"
+                        th:value="${item.id}"
+                        th:text="${item.title}"></option>
+            </select>
+        </p>
+
+        <p>
+            Duration in days:
+            <input type="number" name="durationDays" min="1" value="14" required>
+        </p>
+
+        <button type="submit">Borrow Item</button>
+        <a th:href="@{/borrowings}">Cancel</a>
+    </form>
+</body>
+</html>

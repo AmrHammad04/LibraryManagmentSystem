@@ -7,18 +7,30 @@
 <body>
     <h1>Library Items</h1>
 
-    <form th:action="@{/logout}" method="post">
-        <input type="hidden"
-               th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}">
-        <button type="submit">Log out</button>
-    </form>
+    <nav>
+        <a th:if="${librarian}" th:href="@{/items/books/new}">Add Book</a>
+        <a th:if="${librarian}" th:href="@{/items/magazines/new}">Add Magazine</a>
+        <a th:if="${librarian}" th:href="@{/items/newspapers/new}">Add Newspaper</a>
+        <a th:if="${librarian}" th:href="@{/members}">Members</a>
+        <a th:if="${librarian}" th:href="@{/borrowings}">Borrowings</a>
+        <a th:if="${admin}" th:href="@{/reports}">Reports</a>
+    </nav>
 
-    <form th:action="@{/items}" method="get">
+    <form class="search-form" th:action="@{/items}" method="get">
         <input type="text" name="title" placeholder="Title" th:value="${title}">
         <input type="text" name="author" placeholder="Author / Publisher" th:value="${author}">
         <input type="number" name="year" placeholder="Year" th:value="${year}">
-
+        <label>
+            <input type="checkbox" name="availableOnly" value="true"
+                th:checked="${availableOnly}">
+            Available only
+        </label>
+        <select name="type">
+            <option value="" th:selected="${type == null or type == ''}">All types</option>
+            <option value="BOOK" th:selected="${type == 'BOOK'}">Books</option>
+            <option value="MAGAZINE" th:selected="${type == 'MAGAZINE'}">Magazines</option>
+            <option value="NEWSPAPER" th:selected="${type == 'NEWSPAPER'}">Newspapers</option>
+        </select>
         <button type="submit">Search</button>
         <a th:href="@{/items}">Clear</a>
     </form>
@@ -31,30 +43,64 @@
             <tr>
                 <th>ID</th>
                 <th>Title</th>
+                <th>Type</th>
                 <th>Author / Publisher</th>
                 <th>Year</th>
                 <th>Availability</th>
-                <th th:if="${admin}">Actions</th>
+                <th th:if="${librarian or admin}">Actions</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="item : ${items}">
                 <td th:text="${item.id}"></td>
                 <td th:text="${item.title}"></td>
+                <td>
+                    <span th:if="${bookIds.contains(item.id)}">Book</span>
+                    <span th:if="${magazineIds.contains(item.id)}">Magazine</span>
+                    <span th:if="${newspaperIds.contains(item.id)}">Newspaper</span>
+                </td>
                 <td th:text="${item.author}"></td>
                 <td th:text="${item.yearOfPublication}"></td>
                 <td th:text="${item.availability ? 'Available' : 'Borrowed'}"></td>
-                <td th:if="${admin}">
-                    <form th:action="@{/items/{id}/delete(id=${item.id})}"
-                          method="post">
-                        <input type="hidden"
-                               th:name="${_csrf.parameterName}"
-                               th:value="${_csrf.token}">
-                        <button type="submit">Delete</button>
-                    </form>
+                <td th:if="${librarian or admin}">
+                    <div class="actions">
+                        <form th:if="${librarian and bookIds.contains(item.id)}"
+                              th:action="@{/items/books/{id}/edit(id=${item.id})}"
+                              method="get">
+                            <button type="submit">Edit</button>
+                        </form>
+
+                        <form th:if="${librarian and magazineIds.contains(item.id)}"
+                              th:action="@{/items/magazines/{id}/edit(id=${item.id})}"
+                              method="get">
+                            <button type="submit">Edit</button>
+                        </form>
+
+                        <form th:if="${librarian and newspaperIds.contains(item.id)}"
+                              th:action="@{/items/newspapers/{id}/edit(id=${item.id})}"
+                              method="get">
+                            <button type="submit">Edit</button>
+                        </form>
+
+                        <form th:if="${admin}"
+                              th:action="@{/items/{id}/delete(id=${item.id})}"
+                              method="post">
+                            <input type="hidden"
+                                   th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         </tbody>
     </table>
+
+    <form th:action="@{/logout}" method="post">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+        <button type="submit">Log out</button>
+    </form>
 </body>
 </html>

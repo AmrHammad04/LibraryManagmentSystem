@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Members</title>
+</head>
+<body>
+    <h1>Members</h1>
+
+    <p>
+        <a th:href="@{/items}">Library Items</a>
+        <a th:href="@{/members/new}">Add Member</a>
+    </p>
+
+    <p th:if="${error}" th:text="${error}"></p>
+    <p th:if="${#lists.isEmpty(members)}">No members found.</p>
+
+    <table border="1" th:unless="${#lists.isEmpty(members)}">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="member : ${members}">
+                <td th:text="${member.id}"></td>
+                <td th:text="${member.name}"></td>
+                <td th:text="${member.phone}"></td>
+                <td th:text="${member.email}"></td>
+                <td>
+                    <form th:action="@{/members/{id}/borrowings(id=${member.id})}"
+                          method="get">
+                        <button type="submit">History</button>
+                    </form>
+
+                    <form th:action="@{/members/{id}/edit(id=${member.id})}"
+                          method="get">
+                        <button type="submit">Edit</button>
+                    </form>
+
+                    <form th:if="${admin}"
+                          th:action="@{/members/{id}/delete(id=${member.id})}"
+                          method="post">
+                        <input type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}">
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
