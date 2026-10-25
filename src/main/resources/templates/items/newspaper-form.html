@@ -3,20 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <title>Add Newspaper</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Add Newspaper</h1>
 
-    <form th:action="@{/items/newspapers}" method="post">
+    <form th:action="@{/items/newspapers}"
+          th:object="${newspaper}"
+          method="post"
+          novalidate>
+
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}">
 
-        <p>Title: <input type="text" name="title" required></p>
-        <p>Publisher: <input type="text" name="author" required></p>
-        <p>Year: <input type="number" name="yearOfPublication" required></p>
-        <p>Publication date: <input type="date" name="publicationDate" required></p>
-        <p>Region: <input type="text" name="region" required></p>
+        <p>
+            Title: <input type="text" th:field="*{title}">
+            <span th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"></span>
+        </p>
+
+        <p>
+            Publisher: <input type="text" th:field="*{author}">
+            <span th:if="${#fields.hasErrors('author')}"
+                  th:errors="*{author}"></span>
+        </p>
+
+        <p>
+            Year: <input type="number" th:field="*{yearOfPublication}">
+            <span th:if="${#fields.hasErrors('yearOfPublication')}"
+                  th:errors="*{yearOfPublication}"></span>
+        </p>
+
+        <p>
+            Publication date: <input type="date" th:field="*{publicationDate}">
+            <span th:if="${#fields.hasErrors('publicationDate')}"
+                  th:errors="*{publicationDate}"></span>
+        </p>
+
+        <p>
+            Region: <input type="text" th:field="*{region}">
+            <span th:if="${#fields.hasErrors('region')}"
+                  th:errors="*{region}"></span>
+        </p>
 
         <button type="submit">Save Newspaper</button>
         <a th:href="@{/items}">Cancel</a>

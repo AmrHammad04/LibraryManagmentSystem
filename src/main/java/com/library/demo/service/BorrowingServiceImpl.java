@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.library.demo.dao.BorrowingRepository;
 import com.library.demo.dao.LibraryItemRepository;
 import com.library.demo.dao.MemberRepository;
@@ -49,7 +48,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         Borrowing borrowing = borrowingRepository.findById(id).orElse(null);
 
         if (borrowing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Borrowing not found: " + id);
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Borrowing not found: " + id);
         }
 
         return borrowing;
@@ -59,10 +59,9 @@ public class BorrowingServiceImpl implements BorrowingService {
     public List<Borrowing> findByMemberId(int memberId) {
         requireMember(memberId);
 
-        List<Borrowing> borrowings = borrowingRepository.findAll();
         List<Borrowing> results = new ArrayList<>();
 
-        for (Borrowing borrowing : borrowings) {
+        for (Borrowing borrowing : borrowingRepository.findAll()) {
             if (borrowing.getMember().getId() == memberId) {
                 results.add(borrowing);
             }
@@ -73,10 +72,9 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public List<Borrowing> findActiveByMemberId(int memberId) {
-        List<Borrowing> borrowings = findByMemberId(memberId);
         List<Borrowing> results = new ArrayList<>();
 
-        for (Borrowing borrowing : borrowings) {
+        for (Borrowing borrowing : findByMemberId(memberId)) {
             if (borrowing.getReturnDate() == null) {
                 results.add(borrowing);
             }
@@ -87,43 +85,42 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     @Transactional
-    public Borrowing borrowItem(
-            int memberId, int itemId, int durationDays) {
-
+    public Borrowing borrowItem(int memberId, int itemId, int durationDays) {
         if (durationDays <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Borrowing duration must be greater than zero");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Borrowing duration must be greater than zero");
         }
 
         Member member = requireMember(memberId);
-
         LibraryItem item = libraryItemRepository.findById(itemId).orElse(null);
 
         if (item == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Library item not found: " + itemId);
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Library item not found: " + itemId);
         }
 
-        if (item.getAvailability() == null || item.getAvailability() == false) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Item is unavailable");
+        if (!Boolean.TRUE.equals(item.getAvailability())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Item is unavailable");
         }
 
-        List<Borrowing> borrowings = borrowingRepository.findAll();
-
-        for (Borrowing existingBorrowing : borrowings) {
-            if (existingBorrowing.getItem().getId() == itemId && existingBorrowing.getReturnDate() == null) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,"Item is already borrowed");
+        for (Borrowing existing : borrowingRepository.findAll()) {
+            if (existing.getItem().getId() == itemId
+                    && existing.getReturnDate() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "Item is already borrowed");
             }
         }
 
         LocalDate today = LocalDate.now();
 
-        Date borrowingDate = Date.valueOf(today);
-        Date dueDate = Date.valueOf(today.plusDays(durationDays));
-
         Borrowing borrowing = new Borrowing(
                 member,
                 item,
-                borrowingDate,
-                dueDate);
+                Date.valueOf(today),
+                Date.valueOf(today.plusDays(durationDays)));
 
         item.setAvailability(false);
         libraryItemRepository.save(item);
@@ -137,12 +134,13 @@ public class BorrowingServiceImpl implements BorrowingService {
         Borrowing borrowing = findById(borrowingId);
 
         if (borrowing.getReturnDate() != null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Item has already been returned");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Item has already been returned");
         }
 
         LocalDate today = LocalDate.now();
-
-        long overdueDays = ChronoUnit.DAYS.between(borrowing.getDueDate().toLocalDate(),today);
+        long overdueDays = ChronoUnit.DAYS.between(
+                borrowing.getDueDate().toLocalDate(), today);
 
         if (overdueDays < 0) {
             overdueDays = 0;
@@ -156,20 +154,9 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         LibraryItem item = borrowing.getItem();
         item.setAvailability(true);
-
         libraryItemRepository.save(item);
 
         return borrowingRepository.save(borrowing);
-    }
-
-    private Member requireMember(int memberId) {
-        Member member = memberRepository.findById(memberId).orElse(null);
-
-        if (member == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Member not found: " + memberId);
-        }
-
-        return member;
     }
 
     @Override
@@ -178,19 +165,74 @@ public class BorrowingServiceImpl implements BorrowingService {
         Borrowing borrowing = findById(borrowingId);
 
         if (borrowing.getReturnDate() == null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Return the item before paying the fine");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Return the item before paying the fine");
         }
 
-        if (borrowing.getFineAmount() == null|| borrowing.getFineAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"There is no fine to pay");
+        if (borrowing.getFineAmount() == null
+                || borrowing.getFineAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "There is no fine to pay");
         }
 
         if (borrowing.isFinePaid()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Fine has already been paid");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Fine has already been paid");
         }
 
         borrowing.setFinePaid(true);
-
         return borrowingRepository.save(borrowing);
+    }
+
+    @Override
+    @Transactional
+    public Borrowing updateDueDate(int borrowingId, LocalDate dueDate) {
+        Borrowing borrowing = findById(borrowingId);
+
+        if (borrowing.getReturnDate() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "A returned borrowing cannot be edited");
+        }
+
+        if (dueDate == null
+                || !dueDate.isAfter(borrowing.getBorrowingDate().toLocalDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Due date must be after the borrowing date");
+        }
+
+        borrowing.setDueDate(Date.valueOf(dueDate));
+        return borrowingRepository.save(borrowing);
+    }
+
+    @Override
+    @Transactional
+    public void cancelBorrowing(int borrowingId) {
+        Borrowing borrowing = findById(borrowingId);
+
+        if (borrowing.getReturnDate() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Returned borrowings must remain in the history");
+        }
+
+        LibraryItem item = borrowing.getItem();
+        borrowingRepository.delete(borrowing);
+
+        item.setAvailability(true);
+        libraryItemRepository.save(item);
+    }
+
+    private Member requireMember(int memberId) {
+        Member member = memberRepository.findById(memberId).orElse(null);
+
+        if (member == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Member not found: " + memberId);
+        }
+
+        return member;
     }
 }

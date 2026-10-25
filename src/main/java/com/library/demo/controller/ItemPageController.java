@@ -22,14 +22,27 @@ import java.util.List;
 import com.library.demo.entity.Newspaper;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
+import java.beans.PropertyEditorSupport;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.beans.factory.annotation.Value;
+import java.util.Comparator;
 
 @Controller
 public class ItemPageController {
 
     private final LibraryItemService libraryItemService;
+    private final List<String> itemTypes;
+    private final List<String> sortOptions;
 
-    public ItemPageController(LibraryItemService libraryItemService) {
+    public ItemPageController(
+            LibraryItemService libraryItemService,
+            @Value("${library.item-types}") String itemTypes,
+            @Value("${library.sort-options}") String sortOptions) {
+
         this.libraryItemService = libraryItemService;
+        this.itemTypes = List.of(itemTypes.split(","));
+        this.sortOptions = List.of(sortOptions.split(","));
     }
 
     @GetMapping("/")
@@ -39,18 +52,22 @@ public class ItemPageController {
 
     @GetMapping("/items")
     public String listItems(
-        Authentication authentication,
-        @RequestParam(defaultValue = "false") boolean availableOnly,
-        @RequestParam(required = false) String title,
-        @RequestParam(required = false) String author,
-        @RequestParam(required = false) Integer year,
-        @RequestParam(required = false) String type,
-        Model model) {
+            Authentication authentication,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "false") boolean availableOnly,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) List<String> types,
+            Model model) {
 
         List<LibraryItem> items = libraryItemService.search(title, author, year);
-        model.addAttribute("items", items);        model.addAttribute("title", title);
+        model.addAttribute("items", items);
+        model.addAttribute("title", title);
         model.addAttribute("author", author);
         model.addAttribute("year", year);
+
         boolean admin = false;
         boolean librarian = false;
         List<Integer> bookIds = new ArrayList<>();
@@ -100,7 +117,7 @@ public class ItemPageController {
 
             items = availableItems;
         }
-       
+
         model.addAttribute("availableOnly", availableOnly);
 
         if (type != null && !type.isBlank()) {
@@ -116,10 +133,42 @@ public class ItemPageController {
 
             items = matchingItems;
         }
+
+        if ("title".equals(sortBy)) {
+            items.sort(Comparator.comparing(
+                    LibraryItem::getTitle,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+        } else if ("year".equals(sortBy)) {
+            items.sort(Comparator.comparing(
+                    LibraryItem::getYearOfPublication,
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+        } else {
+            items.sort(Comparator.comparingInt(LibraryItem::getId));
+            sortBy = "id";
+        }
+        if (types != null && !types.isEmpty()) {
+            List<LibraryItem> filteredItems = new ArrayList<>();
+
+            for (LibraryItem item : items) {
+                boolean matches = (item instanceof Book && types.contains("BOOK"))
+                        || (item instanceof Magazine && types.contains("MAGAZINE"))
+                        || (item instanceof Newspaper && types.contains("NEWSPAPER"));
+
+                if (matches) {
+                    filteredItems.add(item);
+                }
+            }
+
+            items = filteredItems;
+        }
+        model.addAttribute("sortBy", sortBy);
         model.addAttribute("type", type);
         model.addAttribute("items", items);
         model.addAttribute("admin", admin);
         model.addAttribute("librarian", librarian);
+        model.addAttribute("sortOptions", sortOptions);
+        model.addAttribute("itemTypes", itemTypes);
+        model.addAttribute("selectedTypes", types == null ? List.of() : types);
         return "items/list";
     }
 
@@ -222,28 +271,34 @@ public class ItemPageController {
     }
 
     @GetMapping("/items/newspapers/new")
-    public String showNewspaperForm() {
+    public String showNewspaperForm(Model model) {
+        model.addAttribute("newspaper", new Newspaper());
         return "items/newspaper-form";
     }
 
     @PostMapping("/items/newspapers")
     public String saveNewspaper(
-            @RequestParam String title,
-            @RequestParam String author,
-            @RequestParam Integer yearOfPublication,
-            @RequestParam String publicationDate,
-            @RequestParam String region) {
+            @Valid @ModelAttribute("newspaper") Newspaper newspaper,
+            BindingResult result) {
 
-        Newspaper newspaper = new Newspaper(
-                title,
-                author,
-                yearOfPublication,
-                true,
-                Date.valueOf(publicationDate),
-                region
-        );
+        if (newspaper.getPublicationDate() != null
+                && newspaper.getYearOfPublication() != null
+                && !newspaper.getYearOfPublication().equals(
+                        newspaper.getPublicationDate().toLocalDate().getYear())) {
+            result.rejectValue(
+                    "yearOfPublication",
+                    "yearMismatch",
+                    "Year must match the publication date");
+        }
 
+        if (result.hasErrors()) {
+            return "items/newspaper-form";
+        }
+
+        newspaper.setId(0);
+        newspaper.setAvailability(true);
         libraryItemService.save(newspaper);
+
         return "redirect:/items";
     }
 
@@ -260,12 +315,21 @@ public class ItemPageController {
     }
 
     @PostMapping("/items/magazines/{id}")
-    public String updateMagazine(@PathVariable int id,
-                                @ModelAttribute Magazine formMagazine) {
+    public String updateMagazine(
+            @PathVariable int id,
+            @Valid @ModelAttribute("magazine") Magazine formMagazine,
+            BindingResult result) {
+
         LibraryItem item = libraryItemService.findById(id);
 
         if (!(item instanceof Magazine)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a magazine");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Item is not a magazine");
+        }
+
+        if (result.hasErrors()) {
+            formMagazine.setId(id);
+            return "items/edit-magazine";
         }
 
         Magazine magazine = (Magazine) item;
@@ -294,26 +358,58 @@ public class ItemPageController {
     @PostMapping("/items/newspapers/{id}")
     public String updateNewspaper(
             @PathVariable int id,
-            @RequestParam String title,
-            @RequestParam String author,
-            @RequestParam Integer yearOfPublication,
-            @RequestParam String publicationDate,
-            @RequestParam String region) {
+            @Valid @ModelAttribute("newspaper") Newspaper formNewspaper,
+            BindingResult result) {
 
         LibraryItem item = libraryItemService.findById(id);
 
         if (!(item instanceof Newspaper)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item is not a newspaper");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Item is not a newspaper");
+        }
+
+        if (formNewspaper.getPublicationDate() != null
+                && formNewspaper.getYearOfPublication() != null
+                && !formNewspaper.getYearOfPublication().equals(
+                        formNewspaper.getPublicationDate().toLocalDate().getYear())) {
+            result.rejectValue(
+                    "yearOfPublication",
+                    "yearMismatch",
+                    "Year must match the publication date");
+        }
+
+        if (result.hasErrors()) {
+            formNewspaper.setId(id);
+            return "items/edit-newspaper";
         }
 
         Newspaper newspaper = (Newspaper) item;
-        newspaper.setTitle(title);
-        newspaper.setAuthor(author);
-        newspaper.setYearOfPublication(yearOfPublication);
-        newspaper.setPublicationDate(Date.valueOf(publicationDate));
-        newspaper.setRegion(region);
+        newspaper.setTitle(formNewspaper.getTitle());
+        newspaper.setAuthor(formNewspaper.getAuthor());
+        newspaper.setYearOfPublication(formNewspaper.getYearOfPublication());
+        newspaper.setPublicationDate(formNewspaper.getPublicationDate());
+        newspaper.setRegion(formNewspaper.getRegion());
 
         libraryItemService.save(newspaper);
         return "redirect:/items";
+    }
+
+    @InitBinder("newspaper")
+    public void bindNewspaperDate(WebDataBinder binder) {
+        binder.registerCustomEditor(Date.class, "publicationDate",
+                new PropertyEditorSupport() {
+                    @Override
+                    public void setAsText(String text) {
+                        setValue(text == null || text.isBlank()
+                                ? null
+                                : Date.valueOf(text));
+                    }
+
+                    @Override
+                    public String getAsText() {
+                        Date date = (Date) getValue();
+                        return date == null ? "" : date.toString();
+                    }
+                });
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
+import org.springframework.security.core.Authentication;
 
 @Controller
 public class MemberPageController {
@@ -22,9 +23,14 @@ public class MemberPageController {
         this.memberService = memberService;
     }
 
-    @GetMapping("/members")
-    public String listMembers(Model model) {
+   @GetMapping("/members")
+    public String listMembers(Model model, Authentication authentication) {
         model.addAttribute("members", memberService.findAll());
+
+        boolean admin = authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        model.addAttribute("admin", admin);
         return "members/list";
     }
 

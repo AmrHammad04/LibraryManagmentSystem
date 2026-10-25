@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <title>Borrowings</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
-    
     <h1>Borrowings</h1>
 
     <p>
         <a th:href="@{/items}">Library Items</a>
         <a th:href="@{/members}">Members</a>
+        <a th:href="@{/borrowings/new}">Borrow an Item</a>
     </p>
-    <p><a th:href="@{/borrowings/new}">Borrow an Item</a></p>
+
+    <p th:if="${error}" th:text="${error}"></p>
     <p th:if="${#lists.isEmpty(borrowings)}">No borrowing records found.</p>
 
     <table border="1" th:unless="${#lists.isEmpty(borrowings)}">
@@ -41,26 +43,38 @@
                 <td th:text="${borrowing.finePaid ? 'Yes' : 'No'}"></td>
                 <td>
                     <form th:if="${borrowing.returnDate == null}"
-                        th:action="@{/borrowings/{id}/return(id=${borrowing.id})}"
-                        method="post">
+                          th:action="@{/borrowings/{id}/edit(id=${borrowing.id})}"
+                          method="get">
+                        <button type="submit">Edit Due Date</button>
+                    </form>
 
+                    <form th:if="${borrowing.returnDate == null}"
+                          th:action="@{/borrowings/{id}/return(id=${borrowing.id})}"
+                          method="post">
                         <input type="hidden"
-                            th:name="${_csrf.parameterName}"
-                            th:value="${_csrf.token}">
-
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}">
                         <button type="submit">Return</button>
                     </form>
 
-                    <form th:if="${borrowing.returnDate != null
-                                and borrowing.fineAmount > 0
-                                and !borrowing.finePaid}"
-                        th:action="@{/borrowings/{id}/pay-fine(id=${borrowing.id})}"
-                        method="post">
-
+                    <form th:if="${admin and borrowing.returnDate == null}"
+                          th:action="@{/borrowings/{id}/delete(id=${borrowing.id})}"
+                          method="post"
+                          onsubmit="return confirm('Cancel this borrowing and release the item?');">
                         <input type="hidden"
-                            th:name="${_csrf.parameterName}"
-                            th:value="${_csrf.token}">
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}">
+                        <button type="submit">Cancel Borrowing</button>
+                    </form>
 
+                    <form th:if="${borrowing.returnDate != null
+                                 and borrowing.fineAmount > 0
+                                 and !borrowing.finePaid}"
+                          th:action="@{/borrowings/{id}/pay-fine(id=${borrowing.id})}"
+                          method="post">
+                        <input type="hidden"
+                               th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}">
                         <button type="submit">Mark Fine Paid</button>
                     </form>
                 </td>

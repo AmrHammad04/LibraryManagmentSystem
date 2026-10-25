@@ -3,50 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Newspaper</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Edit Newspaper</h1>
 
     <form th:action="@{/items/newspapers/{id}(id=${newspaper.id})}"
-          method="post">
+          th:object="${newspaper}"
+          method="post"
+          novalidate>
 
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}">
 
         <p>
-            <label>Title:
-                <input type="text" name="title"
-                       th:value="${newspaper.title}" required>
-            </label>
+            Title: <input type="text" th:field="*{title}">
+            <span th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"></span>
         </p>
 
         <p>
-            <label>Author / Publisher:
-                <input type="text" name="author"
-                       th:value="${newspaper.author}" required>
-            </label>
+            Publisher: <input type="text" th:field="*{author}">
+            <span th:if="${#fields.hasErrors('author')}"
+                  th:errors="*{author}"></span>
         </p>
 
         <p>
-            <label>Year:
-                <input type="number" name="yearOfPublication"
-                       th:value="${newspaper.yearOfPublication}" required>
-            </label>
+            Year: <input type="number" th:field="*{yearOfPublication}">
+            <span th:if="${#fields.hasErrors('yearOfPublication')}"
+                  th:errors="*{yearOfPublication}"></span>
         </p>
 
         <p>
-            <label>Publication Date:
-                <input type="date" name="publicationDate"
-                       th:value="${newspaper.publicationDate}" required>
-            </label>
+            Publication date: <input type="date" th:field="*{publicationDate}">
+            <span th:if="${#fields.hasErrors('publicationDate')}"
+                  th:errors="*{publicationDate}"></span>
         </p>
 
         <p>
-            <label>Region:
-                <input type="text" name="region"
-                       th:value="${newspaper.region}" required>
-            </label>
+            Region: <input type="text" th:field="*{region}">
+            <span th:if="${#fields.hasErrors('region')}"
+                  th:errors="*{region}"></span>
         </p>
 
         <button type="submit">Save Changes</button>

@@ -3,38 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <title>Borrow an Item</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Borrow an Item</h1>
 
-    <form th:action="@{/borrowings}" method="post">
+    <form th:action="@{/borrowings}"
+          th:object="${borrowingForm}"
+          method="post"
+          novalidate>
+
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}">
 
         <p>
             Member:
-            <select name="memberId" required>
+            <select th:field="*{memberId}">
                 <option value="">Choose a member</option>
                 <option th:each="member : ${members}"
                         th:value="${member.id}"
                         th:text="${member.name}"></option>
             </select>
+            <span th:if="${#fields.hasErrors('memberId')}"
+                  th:errors="*{memberId}"></span>
         </p>
 
         <p>
             Available item:
-            <select name="itemId" required>
+            <select th:field="*{itemId}">
                 <option value="">Choose an item</option>
                 <option th:each="item : ${availableItems}"
                         th:value="${item.id}"
                         th:text="${item.title}"></option>
             </select>
+            <span th:if="${#fields.hasErrors('itemId')}"
+                  th:errors="*{itemId}"></span>
         </p>
 
         <p>
             Duration in days:
-            <input type="number" name="durationDays" min="1" value="14" required>
+            <input type="number" th:field="*{durationDays}">
+            <span th:if="${#fields.hasErrors('durationDays')}"
+                  th:errors="*{durationDays}"></span>
         </p>
 
         <button type="submit">Borrow Item</button>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Borrowing</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
+</head>
+<body>
+    <h1>Edit Due Date</h1>
+
+    <p>Member: <span th:text="${borrowing.member.name}"></span></p>
+    <p>Item: <span th:text="${borrowing.item.title}"></span></p>
+    <p>Borrowed: <span th:text="${borrowing.borrowingDate}"></span></p>
+
+    <form th:action="@{/borrowings/{id}/edit(id=${borrowing.id})}"
+          th:object="${dueDateForm}"
+          method="post"
+          novalidate>
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}">
+
+        <p>
+            Due date: <input type="date" th:field="*{dueDate}">
+            <span th:if="${#fields.hasErrors('dueDate')}"
+                  th:errors="*{dueDate}"></span>
+        </p>
+
+        <button type="submit">Save Changes</button>
+        <a th:href="@{/borrowings}">Cancel</a>
+    </form>
+</body>
+</html>

@@ -3,46 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>Edit Magazine</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Edit Magazine</h1>
 
     <form th:action="@{/items/magazines/{id}(id=${magazine.id})}"
           th:object="${magazine}"
-          method="post">
+          method="post"
+          novalidate>
 
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}">
 
         <p>
-            <label>Title:
-                <input type="text" th:field="*{title}" required>
-            </label>
+            Title: <input type="text" th:field="*{title}">
+            <span th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"></span>
         </p>
 
         <p>
-            <label>Author / Publisher:
-                <input type="text" th:field="*{author}" required>
-            </label>
+            Author / Publisher: <input type="text" th:field="*{author}">
+            <span th:if="${#fields.hasErrors('author')}"
+                  th:errors="*{author}"></span>
         </p>
 
         <p>
-            <label>Year:
-                <input type="number" th:field="*{yearOfPublication}" required>
-            </label>
+            Year: <input type="number" th:field="*{yearOfPublication}">
+            <span th:if="${#fields.hasErrors('yearOfPublication')}"
+                  th:errors="*{yearOfPublication}"></span>
         </p>
 
         <p>
-            <label>Issue Number:
-                <input type="number" th:field="*{issueNumber}" required>
-            </label>
+            Issue Number: <input type="number" th:field="*{issueNumber}">
+            <span th:if="${#fields.hasErrors('issueNumber')}"
+                  th:errors="*{issueNumber}"></span>
         </p>
 
         <p>
-            <label>Category:
-                <input type="text" th:field="*{category}" required>
-            </label>
+            Category: <input type="text" th:field="*{category}">
+            <span th:if="${#fields.hasErrors('category')}"
+                  th:errors="*{category}"></span>
         </p>
 
         <button type="submit">Save Changes</button>

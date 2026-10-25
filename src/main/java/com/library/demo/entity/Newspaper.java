@@ -4,12 +4,16 @@ import java.sql.Date;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "newspaper")
 public class Newspaper extends LibraryItem {
 
+    @NotNull(message = "Publication date is required")
     private Date publicationDate;
+    @NotBlank(message = "Region is required")
     private String region;
     
 

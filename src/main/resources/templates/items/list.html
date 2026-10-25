@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Library Items</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Library Items</h1>
 
     <nav>
-        <a th:if="${librarian}" th:href="@{/items/books/new}">Add Book</a>
-        <a th:if="${librarian}" th:href="@{/items/magazines/new}">Add Magazine</a>
-        <a th:if="${librarian}" th:href="@{/items/newspapers/new}">Add Newspaper</a>
-        <a th:if="${librarian}" th:href="@{/members}">Members</a>
-        <a th:if="${librarian}" th:href="@{/borrowings}">Borrowings</a>
+        <a th:if="${admin or librarian}" th:href="@{/items/books/new}">Add Book</a>
+        <a th:if="${admin or librarian}" th:href="@{/items/magazines/new}">Add Magazine</a>
+        <a th:if="${admin or librarian}" th:href="@{/items/newspapers/new}">Add Newspaper</a>
+        <a th:if="${admin or librarian}" th:href="@{/members}">Members</a>
+        <a th:if="${admin or librarian}" th:href="@{/borrowings}">Borrowings</a>
         <a th:if="${admin}" th:href="@{/reports}">Reports</a>
     </nav>
 
@@ -26,11 +27,37 @@
             Available only
         </label>
         <select name="type">
-            <option value="" th:selected="${type == null or type == ''}">All types</option>
-            <option value="BOOK" th:selected="${type == 'BOOK'}">Books</option>
-            <option value="MAGAZINE" th:selected="${type == 'MAGAZINE'}">Magazines</option>
-            <option value="NEWSPAPER" th:selected="${type == 'NEWSPAPER'}">Newspapers</option>
+            <option value="" th:selected="${type == null or type == ''}">
+                All types
+            </option>
+            <option th:each="itemType : ${itemTypes}"
+                    th:value="${itemType}"
+                    th:text="${itemType}"
+                    th:selected="${type == itemType}">
+            </option>
         </select>
+        <fieldset>
+            <legend>Sort by</legend>
+
+            <label th:each="option : ${sortOptions}">
+                <input type="radio"
+                    name="sortBy"
+                    th:value="${option}"
+                    th:checked="${sortBy == option}">
+                <span th:text="${option == 'id' ? 'ID' : #strings.capitalize(option)}"></span>
+            </label>
+        </fieldset>
+        <fieldset>
+            <legend>Item types</legend>
+
+            <label th:each="type : ${itemTypes}">
+                <input type="checkbox"
+                    name="types"
+                    th:value="${type}"
+                    th:checked="${selectedTypes.contains(type)}">
+                <span th:text="${type}"></span>
+            </label>
+        </fieldset>
         <button type="submit">Search</button>
         <a th:href="@{/items}">Clear</a>
     </form>
@@ -64,19 +91,19 @@
                 <td th:text="${item.availability ? 'Available' : 'Borrowed'}"></td>
                 <td th:if="${librarian or admin}">
                     <div class="actions">
-                        <form th:if="${librarian and bookIds.contains(item.id)}"
+                        <form th:if="${(admin or librarian) and bookIds.contains(item.id)}"
                               th:action="@{/items/books/{id}/edit(id=${item.id})}"
                               method="get">
                             <button type="submit">Edit</button>
                         </form>
 
-                        <form th:if="${librarian and magazineIds.contains(item.id)}"
+                        <form th:if="${(admin or librarian) and magazineIds.contains(item.id)}"
                               th:action="@{/items/magazines/{id}/edit(id=${item.id})}"
                               method="get">
                             <button type="submit">Edit</button>
                         </form>
 
-                        <form th:if="${librarian and newspaperIds.contains(item.id)}"
+                        <form th:if="${(admin or librarian) and newspaperIds.contains(item.id)}"
                               th:action="@{/items/newspapers/{id}/edit(id=${item.id})}"
                               method="get">
                             <button type="submit">Edit</button>

@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Library Login</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
 </head>
 <body>
     <h1>Library Login</h1>
-    
+
     <p th:if="${param.error}">Incorrect username or password.</p>
 
     <form th:action="@{/login}" method="post">

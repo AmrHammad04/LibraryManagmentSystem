@@ -45,6 +45,17 @@ public class LibraryItemServiceImpl implements LibraryItemService {
 
     @Override
     public LibraryItem save(LibraryItem item) {
+        if (item instanceof Newspaper newspaper
+                && newspaper.getPublicationDate() != null
+                && newspaper.getYearOfPublication() != null
+                && newspaper.getYearOfPublication().intValue()
+                        != newspaper.getPublicationDate().toLocalDate().getYear()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Year must match the publication date");
+        }
+
         return libraryItemRepository.save(item);
     }
 
