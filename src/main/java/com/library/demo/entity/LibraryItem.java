@@ -1,10 +1,30 @@
 package com.library.demo.entity;
 
-import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.library.demo.validation.ValidPublicationYear;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import com.library.demo.validation.ValidPublicationYear;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.UniqueConstraint;
 @Entity
 @Table(name = "library_item")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -32,6 +52,19 @@ public class LibraryItem {
     @Column(name = "availability")
     private Boolean availability;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    private List<Borrowing> borrowings = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "library_item_tag",
+            joinColumns = @JoinColumn(name = "item_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"item_id", "tag_id"})
+    )
+    private Set<Tag> tags = new HashSet<>();
 
     public LibraryItem() {
     }
@@ -71,7 +104,7 @@ public class LibraryItem {
     public void setAuthor(String author) {
         this.author = author;
     }
-                
+
     public Integer getYearOfPublication() {
         return yearOfPublication;
     }
@@ -79,6 +112,7 @@ public class LibraryItem {
     public void setYearOfPublication(Integer yearOfPublication) {
         this.yearOfPublication = yearOfPublication;
     }
+
     public Boolean getAvailability() {
         return availability;
     }
@@ -87,15 +121,22 @@ public class LibraryItem {
         this.availability = availability;
     }
 
+    public List<Borrowing> getBorrowings() {
+        return borrowings;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
 
     @Override
     public String toString() {
-        return "Library Item{" +
-            ", Title: '" + title + '\'' +
-            ", Author/Publisher: '" + author + '\'' +
-            ", Year of Pubication: '" + yearOfPublication + '\'' +
-            ", Avilability: '" + availability + '\'' +
-            "Library Item ID: " + id +
-            '}';
+        return "LibraryItem{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", yearOfPublication=" + yearOfPublication +
+                ", availability=" + availability +
+                '}';
     }
 }

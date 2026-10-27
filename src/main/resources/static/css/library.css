@@ -18,3 +18,22 @@ th, td {
     padding: 8px;
     text-align: left;
 }
+table td:last-child {
+    white-space: nowrap;
+}
+
+table td:last-child form {
+    display: inline-block;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
+}
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.actions form {
+    margin: 0;
+}

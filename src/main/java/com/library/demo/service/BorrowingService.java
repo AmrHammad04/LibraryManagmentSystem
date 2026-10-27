@@ -2,8 +2,9 @@ package com.library.demo.service;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import com.library.demo.entity.Borrowing;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface BorrowingService {
 
@@ -16,4 +17,6 @@ public interface BorrowingService {
     Borrowing payFine(int borrowingId);
     Borrowing updateDueDate(int borrowingId, LocalDate dueDate);
     void cancelBorrowing(int borrowingId);
+    Page<Borrowing> findPageWithDetails(Pageable pageable);
+    Page<Borrowing> findMemberHistory(int memberId, boolean activeOnly, Pageable pageable);
 }

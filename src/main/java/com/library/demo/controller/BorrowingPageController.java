@@ -1,6 +1,5 @@
 package com.library.demo.controller;
 
-import java.util.List;
 
 import com.library.demo.dto.BorrowingForm;
 import com.library.demo.dto.DueDateForm;
@@ -11,6 +10,7 @@ import com.library.demo.service.MemberService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
+//import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 
 @Controller
 public class BorrowingPageController {
@@ -42,8 +46,23 @@ public class BorrowingPageController {
     }
 
     @GetMapping("/borrowings")
-    public String listBorrowings(Model model, Authentication authentication) {
-        model.addAttribute("borrowings", borrowingService.findAll());
+    public String listBorrowings(
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            Authentication authentication) {
+
+        int pageNumber = Math.max(page, 0);
+        Page<Borrowing> borrowingPage = borrowingService.findPageWithDetails(
+                PageRequest.of(pageNumber, 20));
+
+        if (pageNumber > 0 && pageNumber >= borrowingPage.getTotalPages()) {
+            int lastPage = Math.max(borrowingPage.getTotalPages() - 1, 0);
+            return "redirect:/borrowings?page=" + lastPage;
+        }
+
+        model.addAttribute("borrowings", borrowingPage.getContent());
+        model.addAttribute("currentPage", pageNumber);
+        model.addAttribute("totalPages", borrowingPage.getTotalPages());
 
         boolean admin = authentication.getAuthorities().stream()
                 .anyMatch(authority ->
@@ -167,19 +186,29 @@ public class BorrowingPageController {
     public String memberHistory(
             @PathVariable int memberId,
             @RequestParam(defaultValue = "false") boolean activeOnly,
+            @RequestParam(defaultValue = "0") int page,
             Model model) {
 
-        List<Borrowing> borrowings;
+        int pageNumber = Math.max(page, 0);
 
-        if (activeOnly) {
-            borrowings = borrowingService.findActiveByMemberId(memberId);
-        } else {
-            borrowings = borrowingService.findByMemberId(memberId);
+        Page<Borrowing> history = borrowingService.findMemberHistory(
+                memberId,
+                activeOnly,
+                PageRequest.of(pageNumber, 20, Sort.by("id").descending())
+        );
+
+        if (pageNumber > 0 && pageNumber >= history.getTotalPages()) {
+            int lastPage = Math.max(history.getTotalPages() - 1, 0);
+            return "redirect:/members/" + memberId
+                    + "/borrowings?activeOnly=" + activeOnly
+                    + "&page=" + lastPage;
         }
 
         model.addAttribute("memberId", memberId);
-        model.addAttribute("borrowings", borrowings);
+        model.addAttribute("borrowings", history.getContent());
         model.addAttribute("activeOnly", activeOnly);
+        model.addAttribute("currentPage", pageNumber);
+        model.addAttribute("totalPages", history.getTotalPages());
 
         return "members/history";
     }

@@ -1,18 +1,19 @@
 package com.library.demo.controller;
 
+import com.library.demo.entity.Member;
 import com.library.demo.service.MemberService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import com.library.demo.entity.Member;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import jakarta.validation.Valid;
-import org.springframework.validation.BindingResult;
-import org.springframework.security.core.Authentication;
 
 @Controller
 public class MemberPageController {
@@ -23,12 +24,13 @@ public class MemberPageController {
         this.memberService = memberService;
     }
 
-   @GetMapping("/members")
+    @GetMapping("/members")
     public String listMembers(Model model, Authentication authentication) {
         model.addAttribute("members", memberService.findAll());
 
         boolean admin = authentication.getAuthorities().stream()
-            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+                .anyMatch(authority ->
+                        "ROLE_ADMIN".equals(authority.getAuthority()));
 
         model.addAttribute("admin", admin);
         return "members/list";
@@ -53,9 +55,19 @@ public class MemberPageController {
         memberService.save(member);
         return "redirect:/members";
     }
+
     @GetMapping("/members/{id}/edit")
     public String showEditMemberForm(@PathVariable int id, Model model) {
-        model.addAttribute("member", memberService.findById(id));
+        Member saved = memberService.findById(id);
+
+        Member formMember = new Member(
+                saved.getName(),
+                saved.getPhone(),
+                saved.getEmail()
+        );
+        formMember.setId(saved.getId());
+
+        model.addAttribute("member", formMember);
         return "members/form";
     }
 
@@ -65,22 +77,25 @@ public class MemberPageController {
             @Valid @ModelAttribute("member") Member formMember,
             BindingResult result) {
 
+        if (id <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Member not found: " + id);
+        }
+
+        formMember.setId(id);
+
         if (result.hasErrors()) {
-            formMember.setId(id);
             return "members/form";
         }
 
-        Member member = memberService.findById(id);
-        member.setName(formMember.getName());
-        member.setPhone(formMember.getPhone());
-        member.setEmail(formMember.getEmail());
-
-        memberService.save(member);
+        memberService.save(formMember);
         return "redirect:/members";
     }
 
     @PostMapping("/members/{id}/delete")
-    public String deleteMember(@PathVariable int id,RedirectAttributes redirectAttributes) {
+    public String deleteMember(
+            @PathVariable int id,
+            RedirectAttributes redirectAttributes) {
 
         try {
             memberService.deleteById(id);
@@ -89,10 +104,10 @@ public class MemberPageController {
                 throw exception;
             }
 
-            redirectAttributes.addFlashAttribute("error", exception.getReason());
+            redirectAttributes.addFlashAttribute(
+                    "error", exception.getReason());
         }
 
         return "redirect:/members";
     }
-
 }

@@ -36,7 +36,8 @@
         </p>
 
         <p>
-            Publication date: <input type="date" th:field="*{publicationDate}">
+            Publication date:
+            <input type="date" th:field="*{publicationDate}">
             <span th:if="${#fields.hasErrors('publicationDate')}"
                   th:errors="*{publicationDate}"></span>
         </p>
@@ -46,6 +47,29 @@
             <span th:if="${#fields.hasErrors('region')}"
                   th:errors="*{region}"></span>
         </p>
+
+        <fieldset>
+            <legend>Existing tags</legend>
+            <p th:if="${#lists.isEmpty(availableTags)}">No tags yet.</p>
+
+            <label th:each="tag : ${availableTags}">
+                <input type="checkbox"
+                       name="tagIds"
+                       th:value="${tag.id}"
+                       th:checked="${selectedTagIds.contains(tag.id)}">
+                <span th:text="${tag.name}"></span>
+            </label>
+        </fieldset>
+
+        <p>
+            New tags (separate with commas):
+            <input type="text"
+                   name="newTagNames"
+                   th:value="${newTagNames}">
+        </p>
+
+        <p th:each="error : ${#fields.globalErrors()}"
+           th:text="${error.defaultMessage}"></p>
 
         <button type="submit">Save Changes</button>
         <a th:href="@{/items}">Cancel</a>

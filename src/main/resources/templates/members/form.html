@@ -35,6 +35,12 @@
             <span th:if="${#fields.hasErrors('email')}"
                   th:errors="*{email}"></span>
         </p>
+        <p th:if="${member.id == 0}">
+            A card number will be assigned when you save the member.
+        </p>
+        <p th:if="${member.id != 0}">
+            Card number: <span th:text="${member.id + 1000}"></span>
+        </p>
 
         <button type="submit">Save Member</button>
         <a th:href="@{/members}">Cancel</a>

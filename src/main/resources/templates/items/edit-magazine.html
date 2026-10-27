@@ -24,7 +24,8 @@
         </p>
 
         <p>
-            Author / Publisher: <input type="text" th:field="*{author}">
+            Author / Publisher:
+            <input type="text" th:field="*{author}">
             <span th:if="${#fields.hasErrors('author')}"
                   th:errors="*{author}"></span>
         </p>
@@ -36,7 +37,8 @@
         </p>
 
         <p>
-            Issue Number: <input type="number" th:field="*{issueNumber}">
+            Issue Number:
+            <input type="number" th:field="*{issueNumber}">
             <span th:if="${#fields.hasErrors('issueNumber')}"
                   th:errors="*{issueNumber}"></span>
         </p>
@@ -46,6 +48,29 @@
             <span th:if="${#fields.hasErrors('category')}"
                   th:errors="*{category}"></span>
         </p>
+
+        <fieldset>
+            <legend>Existing tags</legend>
+            <p th:if="${#lists.isEmpty(availableTags)}">No tags yet.</p>
+
+            <label th:each="tag : ${availableTags}">
+                <input type="checkbox"
+                       name="tagIds"
+                       th:value="${tag.id}"
+                       th:checked="${selectedTagIds.contains(tag.id)}">
+                <span th:text="${tag.name}"></span>
+            </label>
+        </fieldset>
+
+        <p>
+            New tags (separate with commas):
+            <input type="text"
+                   name="newTagNames"
+                   th:value="${newTagNames}">
+        </p>
+
+        <p th:each="error : ${#fields.globalErrors()}"
+           th:text="${error.defaultMessage}"></p>
 
         <button type="submit">Save Changes</button>
         <a th:href="@{/items}">Cancel</a>

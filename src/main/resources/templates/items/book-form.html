@@ -8,19 +8,25 @@
 <body>
     <h1>Add Book</h1>
 
-    <form th:action="@{/items/books}" th:object="${book}" method="post" novalidate>
+    <form th:action="@{/items/books}"
+          th:object="${book}"
+          method="post"
+          novalidate>
+
         <input type="hidden"
                th:name="${_csrf.parameterName}"
                th:value="${_csrf.token}">
 
         <p>
             Title: <input type="text" th:field="*{title}" required>
-            <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+            <span th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"></span>
         </p>
 
         <p>
             Author: <input type="text" th:field="*{author}" required>
-            <span th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+            <span th:if="${#fields.hasErrors('author')}"
+                  th:errors="*{author}"></span>
         </p>
 
         <p>
@@ -31,14 +37,42 @@
 
         <p>
             ISBN: <input type="text" th:field="*{isbn}" required>
-            <span th:if="${#fields.hasErrors('isbn')}" th:errors="*{isbn}"></span>
+            <span th:if="${#fields.hasErrors('isbn')}"
+                  th:errors="*{isbn}"></span>
         </p>
 
         <p>
-            Pages: <input type="number" th:field="*{numberOfPages}" min="1" required>
+            Pages: <input type="number"
+                          th:field="*{numberOfPages}"
+                          min="1"
+                          required>
             <span th:if="${#fields.hasErrors('numberOfPages')}"
                   th:errors="*{numberOfPages}"></span>
         </p>
+
+        <fieldset>
+            <legend>Existing tags</legend>
+            <p th:if="${#lists.isEmpty(availableTags)}">No tags yet.</p>
+
+            <label th:each="tag : ${availableTags}">
+                <input type="checkbox"
+                       name="tagIds"
+                       th:value="${tag.id}"
+                       th:checked="${selectedTagIds.contains(tag.id)}">
+                <span th:text="${tag.name}"></span>
+            </label>
+        </fieldset>
+
+        <p>
+            New tags (separate with commas):
+            <input type="text"
+                   name="newTagNames"
+                   th:value="${newTagNames}"
+                   placeholder="History, Science">
+        </p>
+
+        <p th:each="error : ${#fields.globalErrors()}"
+           th:text="${error.defaultMessage}"></p>
 
         <button type="submit">Save Book</button>
         <a th:href="@{/items}">Cancel</a>

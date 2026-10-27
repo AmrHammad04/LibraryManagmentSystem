@@ -19,12 +19,14 @@
 
         <p>
             Title: <input type="text" th:field="*{title}">
-            <span th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+            <span th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"></span>
         </p>
 
         <p>
             Publisher: <input type="text" th:field="*{author}">
-            <span th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+            <span th:if="${#fields.hasErrors('author')}"
+                  th:errors="*{author}"></span>
         </p>
 
         <p>
@@ -34,7 +36,8 @@
         </p>
 
         <p>
-            Issue number: <input type="number" th:field="*{issueNumber}" min="1">
+            Issue number:
+            <input type="number" th:field="*{issueNumber}" min="1">
             <span th:if="${#fields.hasErrors('issueNumber')}"
                   th:errors="*{issueNumber}"></span>
         </p>
@@ -44,6 +47,30 @@
             <span th:if="${#fields.hasErrors('category')}"
                   th:errors="*{category}"></span>
         </p>
+
+        <fieldset>
+            <legend>Existing tags</legend>
+            <p th:if="${#lists.isEmpty(availableTags)}">No tags yet.</p>
+
+            <label th:each="tag : ${availableTags}">
+                <input type="checkbox"
+                       name="tagIds"
+                       th:value="${tag.id}"
+                       th:checked="${selectedTagIds.contains(tag.id)}">
+                <span th:text="${tag.name}"></span>
+            </label>
+        </fieldset>
+
+        <p>
+            New tags (separate with commas):
+            <input type="text"
+                   name="newTagNames"
+                   th:value="${newTagNames}"
+                   placeholder="Science, Monthly">
+        </p>
+
+        <p th:each="error : ${#fields.globalErrors()}"
+           th:text="${error.defaultMessage}"></p>
 
         <button type="submit">Save Magazine</button>
         <a th:href="@{/items}">Cancel</a>
