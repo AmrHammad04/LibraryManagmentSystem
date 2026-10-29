@@ -33,12 +33,17 @@ import com.library.demo.service.LibraryItemService;
 
 import jakarta.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Controller
 public class ItemPageController {
 
     private final LibraryItemService libraryItemService;
     private final List<String> itemTypes;
     private final List<String> sortOptions;
+    private static final Logger log =
+        LoggerFactory.getLogger(ItemPageController.class);
 
     public ItemPageController(
             LibraryItemService libraryItemService,
@@ -170,7 +175,9 @@ public class ItemPageController {
         List<Integer> visibleItemIds = items.stream()
                 .map(LibraryItem::getId)
                 .toList();
-
+        
+        log.info("Displayed library items: {}", items.size());
+        
         model.addAttribute("items", items);
         model.addAttribute(
                 "itemTags",
